@@ -1,0 +1,119 @@
+#!/usr/bin/env zsh
+set -e
+
+# darwin-arm64
+declare -r ARCH="x86_64"
+declare -r REPO="rust-lang/rust-analyzer"
+declare -r TARGET_FILE="new_version"
+declare -r GHP_HOME="${GHP_HOME:-$HOME/.local/lib/git}"
+declare -r OPERATION="$1"
+
+#get_latest_version() {
+#	curl "https://api.github.com/repos/rust-lang/rust-analyzer/releases/latest" | jq ".tag_name"
+#}
+#jq '.assets[] | select(.name | contains("x86_64-apple-darwin")).browser_download_url'
+
+usage() {
+	#declare -A DEV_TARGETS
+
+	#DEV_TARGETS[all]="run operation on all dependencies and then all apps"
+	#DEV_TARGETS[build]="build (all) app(s)"
+	#DEV_TARGETS[apps]="run operation on all apps"
+	#DEV_TARGETS[app]="run operation on specific app"
+	#DEV_TARGETS[deps]="run operation on all dependencies"
+	#DEV_TARGETS[tidy]="runs the operation 'go mod tidy' in target apps"
+	#DEV_TARGETS[test]="runs the operation 'go test' in target apps"
+
+	[[ "$#" > 0 ]] && echo "$1"
+	#echo "usage acs dev <${DEV_OPERATIONS// /|}> <target>"
+	#echo "(note: apps requires deps to run first)\n"
+
+	#echo "Target"
+	#for key in "${(@k)DEV_TARGETS}"; do
+	#	printf "\t\e[0;33m%-25s\e[0m %-s\n" "$key" "${DEV_TARGETS[$key]}"
+	#done
+
+	echo "TODO: usage"
+	if [[ "$#" > 0 ]]; then
+		exit 1
+	else
+		exit 0
+	fi
+}
+
+ghp_init() {
+	echo "oops, initing.."
+}
+
+ghp_versions() {
+	curl "https://api.github.com/repos/rust-lang/rust-analyzer/releases" | jq ".[].tag_name"
+}
+
+ghp_list() {
+	# TODO: show packages along with package version
+	ls "$GHP_HOME"
+}
+
+ghp_update() {
+	local -r target="$1"
+	[[ -z $target ]] && usage "Missing package target"
+
+	# sanity check: does target exist in $GHP_HOME? if not, exit with error
+	local -r working_dir="${GHP_HOME}/${target}"
+
+	local -r current_version="$(cat $working_dir/current-version.txt)"
+	echo "Current version: $current_version"
+
+	echo "Fetching latest version..."
+	local -r latest_meta="$(curl -s 'https://api.github.com/repos/rust-lang/rust-analyzer/releases/latest')"
+	local -r latest_version="$(jq '.tag_name' <<< $latest_meta | tr -d '\"')"
+	echo "Latest version: $latest_version"
+
+	if [[ "$current_version" == "$latest_version" ]]; then
+		echo "Current version and github latest is same. Doing nothing"
+	else
+		echo "Found new version $latest_version"
+		local -r download_link="$(jq '.assets[] | select(.name | contains("x86_64-apple-darwin")).browser_download_url' <<< $latest_meta)"
+
+		# REMOVE
+		echo "Downloading from $download_link as newest bin"
+		curl -s "$download_link" -o newest.version -L
+
+		# TODO install
+		# TODO cleanup (delete file)
+		echo "done"
+	fi
+}
+
+ghp_install() {
+	local -r target="$1"
+
+	local -r working_dir="$HOME/.local/lib/git/$"
+
+	echo "Preparing to install target $target"
+	echo "Fetching latest version..."
+	local -r latest_meta="$(curl -s 'https://api.github.com/repos/rust-lang/rust-analyzer/releases/latest')"
+	local -r latest_version="$(jq '.tag_name' <<< $latest_meta | tr -d '\"')"
+	echo "Latest version: $latest_version"
+
+	# create symlink
+	# decide on update strategy
+}
+
+ghp_search() {
+}
+
+
+# check if $GHP_HOME exists, if not, run init
+if [[ -a "$GHP_HOME" ]]; then
+	[[ "$1" == '--help' || "$1" == '-h' ]] && usage
+
+	local -r CMD="ghp_$OPERATION"
+	command -v "$CMD" > /dev/null || usage
+
+	shift 1
+	exec "$CMD" "$@"
+else
+	printf '$GHP_HOME (%s) does not exist. Creating..\n' "$GHP_HOME"
+	ghp_init
+fi
