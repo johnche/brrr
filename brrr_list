@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+source "$PWD/brrr_common"
+
+cat "$BRRR_HOME/packages.txt"

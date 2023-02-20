@@ -1,0 +1,128 @@
+#!/usr/bin/env zsh
+
+declare -r BRRR_HOME="$(readlink -f $ZSH_ARGZERO | xargs dirname)"
+source "$BRRR_HOME/meta.txt"
+
+symlink() {
+	local -r target_file="$1"
+	local -r bin_name="$2"
+
+	chmod u+x $target_file
+
+	local -r symlink_path="$BRRR_HOME/bin/$bin_name"
+	if [ -a "$symlink_path" ]; then
+		echo "Removing old symlink"
+		rm "$symlink_path"
+	fi
+
+	echo "symlinking $target_file to $symlink_path"
+	ln -s "$target_file" "$symlink_path"
+
+}
+
+prune_bin() {
+	rm -fv -- "$BRRR_HOME/bin/*(-@D)"
+}
+
+unpack() {
+	local -r target_file="$1"
+	local -r target_dir="$2"
+
+	case "$target_file" in
+		*.tar.gz) tar -xvzf "$target_file" -C "$target_dir " && rm "$target_file";;
+		*.tgz)    tar -xvzf "$target_file" -C "$target_dir " && rm "$target_file";;
+		*.gz)     gzip -d "$target_file";;
+		*)        echo "Error: no unpacking strategy for $target_file, skipping." && return
+	esac
+}
+
+get_versions() {
+	local -r releases="$1"
+	jq -r '.[].tag_name | select(contains("nightly") | not)' <<< $releases | sort -r
+}
+
+get_latest_version() {
+	local -r releases="$1"
+	get_versions "$releases" | head -n 1
+}
+
+get_releases() {
+	local -r repo="$1"
+	printf "%s\n" "$(curl -s "https://api.github.com/repos/$repo/releases")"
+}
+
+get_release() {
+	local -r releases="$1"
+	local -r tag_name="$2"
+
+	jq -r ".[] | select(.tag_name | contains(\"$tag_name\"))" <<< $releases
+}
+
+get_latest_release() {
+	local -r releases="$1"
+	local -r latest_version="$(get_latest_version $releases)"
+
+	get_release "$releases" "$latest_version"
+}
+
+get_download_link() {
+	local -r package_info="$1"
+	jq -r ".assets[] | select(.name | ascii_downcase | contains(\"$OS\") and contains(\"$ARCH\")).browser_download_url" <<< $package_info
+}
+
+install_release() {
+	local -r target="$1"
+	local -r release="$2"
+
+	local -r version="$(jq -r '.tag_name' <<< $latest_release)"
+	local -r download_link="$(get_download_link $latest_release)"
+
+	if [ -z $download_link ]; then
+		echo "Error: Could not find package, skipping"
+		return
+	fi
+
+	echo "Found download link: $download_link"
+
+	local -r target_dir="$BRRR_HOME/lib/$(basename $target)"
+	echo "Downloading to $target_dir"
+	mkdir "$target_dir"
+	wget -q --show-progress "$download_link" -P "$target_dir"
+
+	echo "Unpacking"
+	unpack "$target_dir/$(basename $download_link)" "$target_dir"
+
+	local -r bin_name="$(basename $target)"
+	for file in $target_dir/*(.); do
+		symlink "$file" "$bin_name"
+	done
+}
+
+package_exists() {
+	local -r target="$1"
+	test ! -z $(grep "$target" "$BRRR_HOME/packages.txt")
+}
+
+package_add() {
+	local -r target="$1"
+	local -r version="$2"
+
+	echo "$target $version" >> "$BRRR_HOME/packages.txt"
+}
+
+package_update() {
+	local -r target="$1"
+	local -r version="$2"
+
+	local -r owner="$(dirname $target)"
+	local -r repo="$(basename $target)"
+
+	sed -e "s/.*$target.*/$owner\/$repo $version/" "$BRRR_HOME/packages.txt"
+}
+
+package_delete() {
+}
+
+printer() {
+	printf "---> $@\n"
+}

@@ -1,0 +1,61 @@
+#!/usr/bin/env zsh
+set -e
+
+source "$PWD/brrr_common"
+
+usage() {
+	[[ "$#" > 0 ]] && echo "$1"
+	echo "usage brrr update <package(s)>\n"
+
+	if [[ "$#" > 0 ]]; then
+		exit 1
+	else
+		exit 0
+	fi
+}
+
+update_package() {
+	local -r target="$1"
+	printer "installing $target"
+
+	echo "Finding package record"
+	local -r package_meta="$(grep -w $target $BRRR_HOME/packages.txt)"
+	if [ -z $package_meta ]; then
+		echo "Could not find $target. Skipping"
+		return
+	fi
+
+	echo "Found $target"
+	local -r current_version="$(awk '{print $2}' <<< $package_meta)"
+	echo "Current version: $current_version"
+
+	echo "Fetching latest version..."
+	local -r releases="$(get_releases $target)"
+
+	local -r latest_version="$(get_latest_version $releases)"
+	echo "Latest version: $latest_version"
+
+	if [[ "$current_version" == "$latest_version" ]]; then
+		echo "Current version and github latest is same. Doing nothing"
+		return
+	fi
+
+	local -r latest_release="$(get_latest_release $releases)"
+	local -r version="$(jq -r '.tag_name' <<< $latest_release)"
+
+	install_release "$target" "$latest_release"
+	package_update "$target" "$version"
+
+	echo "Finished $target"
+}
+
+run_updater() {
+	for package in "$@"; do
+		update_package "$package"
+	done
+}
+
+[[ "$1" == '--help' || "$1" == '-h' ]] && usage
+[[ "$#" == 0 ]] && usage "Missing package args"
+
+run_updater "$@"

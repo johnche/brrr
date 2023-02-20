@@ -1,0 +1,47 @@
+#!/usr/bin/env zsh
+set -e
+
+source "$PWD/brrr_common"
+
+usage() {
+	[[ "$#" > 0 ]] && echo "$1"
+	echo "usage brrr install <package(s)>\n"
+
+	if [[ "$#" > 0 ]]; then
+		exit 1
+	else
+		exit 0
+	fi
+}
+
+install_package() {
+	local -r target="$1"
+	printer "installing $target"
+
+	if package_exists $target; then
+		echo "$target is already installed. skipping"
+		return
+	fi
+
+	echo "Fetching latest version..."
+	local -r releases="$(get_releases $target)"
+	local -r latest_release="$(get_latest_release $releases)"
+	local -r version="$(jq -r '.tag_name' <<< $latest_release)"
+
+	install_release "$target" "$latest_release"
+	package_add "$target" "$version"
+
+	echo "Finished $target"
+}
+
+run_installer() {
+	for package in "$@"; do
+		install_package "$package"
+	done
+}
+
+
+[[ "$1" == '--help' || "$1" == '-h' ]] && usage
+[[ "$#" == 0 ]] && usage "Missing package args"
+
+run_installer "$@"
