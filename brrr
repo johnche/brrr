@@ -9,6 +9,7 @@ usage() {
 	declare -A actions
 
 	actions[install]="install packages"
+	actions[search]="search packages"
 	actions[list]="list installed packages"
 	actions[update]="update package"
 	actions[delete]="delete package"
