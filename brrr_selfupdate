@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+source "$1/brrr_common"
+
+(cd "$BRRR_HOME" && git pull)
