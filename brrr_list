@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
-source "$PWD/brrr_common"
+source "$1/brrr_common"
+shift 1
 
 cat "$BRRR_HOME/packages.txt"

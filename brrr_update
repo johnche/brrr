@@ -1,7 +1,8 @@
 #!/usr/bin/env zsh
 set -e
 
-source "$PWD/brrr_common"
+source "$1/brrr_common"
+shift 1
 
 usage() {
 	[[ "$#" > 0 ]] && echo "$1"

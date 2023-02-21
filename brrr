@@ -3,7 +3,6 @@ set -e
 
 declare -r CWD="$(dirname $0)"
 declare -r OPERATION="$1"
-source "$CWD/brrr_common"
 
 usage() {
 	declare -A actions
@@ -13,6 +12,7 @@ usage() {
 	actions[list]="list installed packages"
 	actions[update]="update package"
 	actions[delete]="delete package"
+	actions[selfupdate]="update brrr"
 
 	[[ "$#" > 0 ]] && echo "$1"
 	echo "usage brrr <command> (<args>)\n"
@@ -46,19 +46,21 @@ init_brrr() {
 	EOF
 	chmod u+x "$HOME/.local/bin/brrr"
 
-	printer "init done"
+	echo "---> init done"
 }
 
 if [[ ! -e "$CWD/meta.txt" || ! -e "$CWD/packages.txt" ]]; then
-	printer "initializing brrr.."
+	echo "---> initializing brrr.."
 	init_brrr
 fi
+
 
 [[ "$1" == '--help' || "$1" == '-h' ]] && usage
 [[ "$#" == 0 ]] && usage "Missing command"
 
-local -r CMD="$PWD/brrr_$OPERATION"
+local -r CMD="$CWD/brrr_$OPERATION"
 command -v "$CMD" > /dev/null || usage
 
+
 shift 1
-exec "$CMD" "$@"
+exec "$CMD" "$CWD" "$@"

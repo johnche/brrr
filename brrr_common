@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-declare -r BRRR_HOME="$(readlink -f $ZSH_ARGZERO | xargs dirname)"
+declare -r BRRR_HOME="$(dirname $0)"
 source "$BRRR_HOME/meta.txt"
 
 symlink() {
@@ -10,7 +10,7 @@ symlink() {
 	chmod u+x $target_file
 
 	local -r symlink_path="$BRRR_HOME/bin/$bin_name"
-	if [ -a "$symlink_path" ]; then
+	if [[ -a "$symlink_path" ]]; then
 		echo "Removing old symlink"
 		rm "$symlink_path"
 	fi
@@ -100,7 +100,7 @@ install_release() {
 
 package_exists() {
 	local -r target="$1"
-	test ! -z $(grep "$target" "$BRRR_HOME/packages.txt")
+	test ! -z "$(grep $target $BRRR_HOME/packages.txt)"
 }
 
 package_add() {
