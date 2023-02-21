@@ -39,6 +39,7 @@ run_installer() {
 	for package in "$@"; do
 		install_package "$package"
 	done
+	exit
 }
 
 

@@ -24,6 +24,7 @@ run_deleter() {
 	for package in "$@"; do
 		delete_package "$package"
 	done
+	exit
 }
 
 [[ "$1" == '--help' || "$1" == '-h' ]] && usage

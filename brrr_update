@@ -54,6 +54,7 @@ run_updater() {
 	for package in "$@"; do
 		update_package "$package"
 	done
+	exit
 }
 
 [[ "$1" == '--help' || "$1" == '-h' ]] && usage
