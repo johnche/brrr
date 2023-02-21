@@ -57,7 +57,16 @@ run_updater() {
 	exit
 }
 
+update_all() {
+	while read package; do
+		local target="$(awk '{print $1}' <<< $package)"
+		update_package "$target"
+	done < "$BRRR_HOME/packages.txt"
+	exit
+}
+
 [[ "$1" == '--help' || "$1" == '-h' ]] && usage
 [[ "$#" == 0 ]] && usage "Missing package args"
+[[ "$1" == '--all' || "$1" == '-a' ]] && update_all
 
 run_updater "$@"
