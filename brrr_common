@@ -121,6 +121,14 @@ package_update() {
 }
 
 package_delete() {
+	local -r target="$1"
+	local -r repo="$(basename $target)"
+
+	rm -v "$BRRR_HOME/bin/$repo"
+	rm -rfv "$BRRR_HOME/lib/$repo"
+
+	# sed on macos and linux are different. this one is for macos
+	sed -i '' "/$repo/d" "$BRRR_HOME/packages.txt"
 }
 
 printer() {

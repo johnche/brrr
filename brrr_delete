@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+source "$1/brrr_common"
+shift 1
+
+usage() {
+	[[ "$#" > 0 ]] && echo "$1"
+	echo "usage brrr delete <package(s)>\n"
+
+	if [[ "$#" > 0 ]]; then
+		exit 1
+	else
+		exit 0
+	fi
+}
+
+delete_package() {
+	local -r target="$1"
+
+	package_delete "$target"
+}
+
+run_deleter() {
+	for package in "$@"; do
+		delete_package "$package"
+	done
+}
+
+[[ "$1" == '--help' || "$1" == '-h' ]] && usage
+[[ "$#" == 0 ]] && usage "Missing package args"
+
+run_deleter "$@"
