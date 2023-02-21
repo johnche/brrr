@@ -117,7 +117,7 @@ package_update() {
 	local -r owner="$(dirname $target)"
 	local -r repo="$(basename $target)"
 
-	sed -e "s/.*$target.*/$owner\/$repo $version/" "$BRRR_HOME/packages.txt"
+	sed -e "s/.*$repo.*/$owner\/$repo $version/" "$BRRR_HOME/packages.txt"
 }
 
 package_delete() {
