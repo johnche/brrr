@@ -52,6 +52,8 @@ init_brrr() {
 if [[ ! -e "$CWD/meta.txt" || ! -e "$CWD/packages.txt" ]]; then
 	echo "---> initializing brrr.."
 	init_brrr
+	echo "---> Finished initializing. Rerun brrr"
+	exit
 fi
 
 
