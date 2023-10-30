@@ -20,4 +20,5 @@ search_github() {
 [[ "$1" == '--help' || "$1" == '-h' ]] && usage
 [[ "$#" == 0 ]] && usage "Missing package args"
 
+shift 1
 search_github "$1"
